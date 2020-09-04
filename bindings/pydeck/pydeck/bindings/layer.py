@@ -3,7 +3,7 @@ import uuid
 import numpy as np
 
 from ..data_utils import is_pandas_df, has_geo_interface, records_from_geo_interface
-from .json_tools import JSONMixin, camel_and_lower
+from .json_tools import JSONMixin, camel_and_lower, all_numpy_to_list
 
 
 TYPE_IDENTIFIER = "@@type"
@@ -125,11 +125,11 @@ class Layer(JSONMixin):
         if self.use_binary_transport:
             self._binary_data = self._prepare_binary_data(data_set)
         elif is_pandas_df(data_set):
-            self._data = data_set.to_dict(orient="records")
+            self._data = all_numpy_to_list(data_set.to_dict(orient="records"))
         elif has_geo_interface(data_set):
-            self._data = records_from_geo_interface(data_set)
+            self._data = all_numpy_to_list(records_from_geo_interface(data_set))
         else:
-            self._data = data_set
+            self._data = all_numpy_to_list(data_set)
 
     def get_binary_data(self):
         if not self.use_binary_transport:

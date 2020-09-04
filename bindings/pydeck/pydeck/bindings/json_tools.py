@@ -2,6 +2,7 @@
 Support serializing objects into JSON
 """
 import json
+import re
 
 # Attributes to ignore during JSON serialization
 IGNORE_KEYS = [
@@ -78,16 +79,59 @@ def serialize(serializable):
     return json.dumps(serializable, sort_keys=True, default=default_serialize)
 
 
+def multiple_replace(patterns, text):
+    """Regex replace for multiple patterns"""
+    regex = re.compile("(%s)" % "|".join(map(re.escape, patterns.keys())))
+    return regex.sub(lambda mo: patterns[mo.string[mo.start():mo.end()]], text)
+
+
+def all_numpy_to_list(obj):
+    """Converts all arrays nested in an Iterable (dict included) to list"""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            obj[k] = all_numpy_to_list(v)
+
+    if is_array(obj):
+        obj = list(obj)
+
+        for i, item in enumerate(obj):
+            if is_array(item) or isinstance(item, dict):
+                obj[i] = all_numpy_to_list(item)
+
+    return obj
+
+
+def julia_pycall_compatible_serialize(serializable,
+                                      remap_function=lower_camel_case_keys):
+    """Serializer compatible with Julia's PyCall package"""
+    attrs = vars(serializable)
+    # numpy array needs to be converted to list
+    attrs = {k: all_numpy_to_list(v) for k, v in attrs.items() if v is not None}
+    for ignore_attr in IGNORE_KEYS:
+        if attrs.get(ignore_attr):
+            del attrs[ignore_attr]
+    if remap_function:
+        remap_function(attrs)
+
+    # json.dumps is not compatible with PyCall, use str() and regex instead
+    patterns = {
+        "'": '"',
+        "False": "false",
+        "True": "true"
+    }
+    return multiple_replace(patterns, str(attrs))
+
+
 class JSONMixin(object):
     def __repr__(self):
         """
         Override of string representation method to return a JSON-ified version of the
         Deck object.
         """
-        return serialize(self)
+        return julia_pycall_compatible_serialize(self)
 
     def to_json(self):
         """
         Return a JSON-ified version of the Deck object.
         """
-        return serialize(self)
+        return julia_pycall_compatible_serialize(self)
