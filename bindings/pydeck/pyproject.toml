@@ -1,11 +1,6 @@
 [project]
 name = "pydeck"
-version = "0.3.0"
-
-requires = [
-    "setuptools",
-    "wheel",
-]
+version = "0.5.0b1"
 
 [tool.black]
 line-length = 120

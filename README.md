@@ -66,6 +66,51 @@ npm install deck.gl
 pip install pydeck
 ```
 
+### Julia
+
+```bash
+git clone --single-branch --branch pydeck/julia-pycall-binding git@github.com:captchanjack/deck.gl.git
+cd deck.gl/bindings/pydeck
+yarn bootstrap
+pip install . 
+```
+```julia
+using PyCall
+
+pydeck = pyimport("pydeck")
+
+UK_ACCIDENTS_DATA = ("https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/3d-heatmap/heatmap-data.csv")
+MAPBOX_API_KEY  ="pk.eyJ1IjoiY2FwdGNoYW5qYWNrIiwiYSI6ImNrMzJ1enJoZjBueWwzY245ZDV0YjJ3Z3YifQ.VAWolOVu6eDYSnj3SC4NeQ"
+
+
+layer = pydeck.Layer(
+    "HexagonLayer",
+    UK_ACCIDENTS_DATA,
+    get_position=["lng", "lat"],
+    auto_highlight=true,
+    elevation_scale=50,
+    pickable=true,
+    elevation_range=[0, 3000],
+    extruded=true,                 
+    coverage=1)
+
+# Set the viewport location
+view_state = pydeck.ViewState(
+    longitude=-1.415,
+    latitude=52.2323,
+    zoom=6,
+    min_zoom=5,
+    max_zoom=15,
+    pitch=40.5,
+    bearing=-27.36)
+
+# Combined all of it and render a viewport
+r = pydeck.Deck(layers=[layer], initial_view_state=view_state,
+             mapbox_key=MAPBOX_API_KEY,
+            )
+r.to_html("nodes.html", notebook_display=true)
+```
+
 - [Get started](https://pydeck.gl/installation.html)
 - [Examples](https://pydeck.gl/)
 

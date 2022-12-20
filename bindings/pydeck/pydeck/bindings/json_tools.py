@@ -3,6 +3,7 @@ Support serializing objects into JSON
 """
 import json
 import re
+import numpy as np
 
 # Attributes to ignore during JSON serialization
 IGNORE_KEYS = [
@@ -91,11 +92,11 @@ def all_numpy_to_list(obj):
         for k, v in obj.items():
             obj[k] = all_numpy_to_list(v)
 
-    if is_array(obj):
+    if  isinstance(obj, (list,np.ndarray)):
         obj = list(obj)
 
         for i, item in enumerate(obj):
-            if is_array(item) or isinstance(item, dict):
+            if isinstance(item, (list,np.ndarray,dict)):
                 obj[i] = all_numpy_to_list(item)
 
     return obj
